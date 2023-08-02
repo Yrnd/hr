@@ -8,9 +8,7 @@ from Class import Message_history, Application
 bot = telebot.TeleBot('6597318240:AAGBAAcI3xgovQM7JefszGAymzLhNv9doUQ')
 
 Message = Message_history()
-buf_mh = Message_history()
 App = Application()
-buf = Application()
 admin_panel = Application()
 app_folder = 'folder/app_base.txt'
 msg_folder = 'folder/mh_base.txt'
@@ -29,42 +27,28 @@ def start(message):
     user_id = message.from_user.id
     App.dict = load_1(App.dict, app_folder)
     Message.history = load_2(Message.history, msg_folder)
-    if Check_ID_in_buf(user_id):
-        if buf.dict[user_id]["Stage"] == "10":
+    if Check_ID(user_id):
+        if App.dict[user_id]["Stage"] == "10":
             answer = 'Политика нашей компании подразумевает сотрудничество с лицами от 16ти лет' \
                      '\nподрастите немного и возвращайтесь обратно)'
             bot.send_message(id, answer)
-        elif buf.dict[user_id]["Stage"] != "6":
+        elif App.dict[user_id]["Stage"] == "6":
+            answer = 'Заявка уже отправлена, ожидайте ответа оператора⏰'
+            bot.send_message(id, answer)
+        elif App.dict[user_id]["Stage"] != "6":
             answer = 'Вы уже заполняете заявку, завершите начатое'
             bot.send_message(id, answer)
-            print(message)
             Recruting(message=message)
-    else:
-        if Check_ID(user_id):
-            if App.dict[user_id]["Stage"] == "10":
-                answer = 'Политика нашей компании подразумевает сотрудничество с лицами от 16ти лет' \
-                         '\nподрастите немного и возвращайтесь обратно)'
-                bot.send_message(id, answer)
-            elif App.dict[user_id]["Stage"] == "6":
-                answer = 'Заявка уже отправлена, ожидайте ответа оператора⏰'
-                bot.send_message(id, answer)
-            else:
-                try:
-                    App.dict.pop(user_id)
-                except:
-                    ...
-                bot.send_message(id, "Ваша заявка не дошла до сервера, "
-                                     "проверьте подключение и попробуйте отправить новую")
-                pre_talk(id, message.from_user.id)
         else:
+            try:
+                App.dict.pop(user_id)
+            except:
+                ...
+            bot.send_message(id, "Ваша заявка не дошла до сервера, "
+                                 "проверьте подключение и попробуйте отправить новую")
             pre_talk(id, message.from_user.id)
-
-
-def Check_ID_in_buf(id):
-    if buf.dict.get(id) is not None:
-        return True
     else:
-        return False
+        pre_talk(id, message.from_user.id)
 
 
 def Check_ID(id):
@@ -75,13 +59,13 @@ def Check_ID(id):
 
 
 def pre_talk(id, user_id):
-    buf_mh.add_key(user_id)
-    buf.add_key(user_id)
+    App.add_key(user_id)
+    Message.add_key(user_id)
     markup_inline = types.InlineKeyboardMarkup()
     markup_inline.add(types.InlineKeyboardButton("Начать✅", callback_data='app_ready'))
     answer = 'Мы готовы предложить вам вакансию,\nно для этого необходимо заполнить небольшую анкету '
     bot.send_message(id, answer,reply_markup=markup_inline)
-    buf_mh.history[user_id].append('Напишите свой город, район города')
+    Message.history[user_id].append('Напишите свой город, район города')
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -91,86 +75,86 @@ def Recruting_talk(call):
                               message_id=call.message.message_id,
                               text='Напишите свой город, район города')
     elif call.data == "side_job":
-        buf.dict[call.message.chat.id]["Employment_type"] = "Подработка"
-        buf_mh.history[call.message.chat.id].append('Подработка')
-        buf.dict[call.message.chat.id]["Stage"] = "2"
+        App.dict[call.message.chat.id]["Employment_type"] = "Подработка"
+        Message.history[call.message.chat.id].append('Подработка')
+        App.dict[call.message.chat.id]["Stage"] = "2"
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text='Сколько вам лет?')
-        buf_mh.history[call.message.chat.id].append('Сколько вам лет?')
+        Message.history[call.message.chat.id].append('Сколько вам лет?')
     elif call.data == "ft_job":
-        buf.dict[call.message.chat.id]["Employment_type"] = "Полная_занятость"
-        buf_mh.history[call.message.chat.id].append('Полная_занятость')
-        buf.dict[call.message.chat.id]["Stage"] = "2"
+        App.dict[call.message.chat.id]["Employment_type"] = "Полная_занятость"
+        Message.history[call.message.chat.id].append('Полная_занятость')
+        App.dict[call.message.chat.id]["Stage"] = "2"
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text='Сколько вам лет?')
-        buf_mh.history[call.message.chat.id].append('Сколько вам лет?')
+        Message.history[call.message.chat.id].append('Сколько вам лет?')
     elif call.data == "var_job":
-        buf.dict[call.message.chat.id]["Employment_type"] = "Свой_вариант"
-        buf_mh.history[call.message.chat.id].append('Свой_вариант')
+        App.dict[call.message.chat.id]["Employment_type"] = "Свой_вариант"
+        Message.history[call.message.chat.id].append('Свой_вариант')
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("Продолжить", callback_data='continue'))
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text='Вариант занятости будет обговорен с оператором после заполнения анкеты'
                                    'Для продолжения анкетирования нажмите кнопку', reply_markup=markup)
-        buf.dict[call.message.chat.id]["Stage"] = "2"
+        App.dict[call.message.chat.id]["Stage"] = "2"
     elif call.data == "continue":
         time.sleep(0.5)
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text='Сколько вам лет?')
-        buf_mh.history[call.message.chat.id].append('Сколько вам лет?')
+        Message.history[call.message.chat.id].append('Сколько вам лет?')
     elif call.data == "самокат":
-        buf.dict[call.message.chat.id]["Transport"] = "Самокат"
-        buf_mh.history[call.message.chat.id].append('Самокат')
+        App.dict[call.message.chat.id]["Transport"] = "Самокат"
+        Message.history[call.message.chat.id].append('Самокат')
         answer = 'И последний вопрос, откуда вы о нас узнали?'
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text=answer)
-        buf_mh.history[call.message.chat.id].append(answer)
-        buf.dict[call.message.chat.id]["Stage"] = "4"
+        Message.history[call.message.chat.id].append(answer)
+        App.dict[call.message.chat.id]["Stage"] = "4"
     elif call.data == 'велик':
-        buf.dict[call.message.chat.id]["Transport"] = "Велосипед"
-        buf_mh.history[call.message.chat.id].append('Велосипед')
+        App.dict[call.message.chat.id]["Transport"] = "Велосипед"
+        Message.history[call.message.chat.id].append('Велосипед')
         answer = 'И последний вопрос, откуда вы о нас узнали?'
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text=answer)
-        buf_mh.history[call.message.chat.id].append(answer)
-        buf.dict[call.message.chat.id]["Stage"] = "4"
+        Message.history[call.message.chat.id].append(answer)
+        App.dict[call.message.chat.id]["Stage"] = "4"
     elif call.data == 'машина':
-        buf.dict[call.message.chat.id]["Transport"] = "Машина"
-        buf_mh.history[call.message.chat.id].append('Машина')
+        App.dict[call.message.chat.id]["Transport"] = "Машина"
+        Message.history[call.message.chat.id].append('Машина')
         answer = 'И последний вопрос, откуда вы о нас узнали?'
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text=answer)
-        buf_mh.history[call.message.chat.id].append(answer)
-        buf.dict[call.message.chat.id]["Stage"] = "4"
+        Message.history[call.message.chat.id].append(answer)
+        App.dict[call.message.chat.id]["Stage"] = "4"
     elif call.data == 'права':
-        buf.dict[call.message.chat.id]["Transport"] = "Права"
-        buf_mh.history[call.message.chat.id].append('Права')
+        App.dict[call.message.chat.id]["Transport"] = "Права"
+        Message.history[call.message.chat.id].append('Права')
         answer = 'И последний вопрос, откуда вы о нас узнали?'
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text=answer)
-        buf_mh.history[call.message.chat.id].append(answer)
-        buf.dict[call.message.chat.id]["Stage"] = "4"
+        Message.history[call.message.chat.id].append(answer)
+        App.dict[call.message.chat.id]["Stage"] = "4"
     elif call.data == 'пешеход':
-        buf.dict[call.message.chat.id]["Transport"] = "Пешеход"
-        buf_mh.history[call.message.chat.id].append('Пешеход')
+        App.dict[call.message.chat.id]["Transport"] = "Пешеход"
+        Message.history[call.message.chat.id].append('Пешеход')
         answer = 'И последний вопрос, откуда вы о нас узнали?'
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
                               text=answer)
-        buf_mh.history[call.message.chat.id].append(answer)
-        buf.dict[call.message.chat.id]["Stage"] = "4"
+        Message.history[call.message.chat.id].append(answer)
+        App.dict[call.message.chat.id]["Stage"] = "4"
     elif call.data == 'send':
-        buf.dict[call.message.chat.id]["Stage"] = "6"
-        save(buf.instring(), app_folder)
-        save(buf_mh.instring(), msg_folder)
+        App.dict[call.message.chat.id]["Stage"] = "6"
+        App.instring_save(app_folder)
+        Message.instring_save(msg_folder)
         answer = 'Ваше заявление обрабатывается. Ожидайте, с Вами свяжется наш живой оператор'
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
@@ -208,32 +192,23 @@ def Recruting_talk(call):
 
 @bot.message_handler(content_types=["text"])
 def Recruting(message):
-    if Check_ID_in_buf(message.from_user.id):
-        if buf.dict[message.from_user.id]["Stage"] == "10":
+    if Check_ID(message.from_user.id):
+        if App.dict[message.from_user.id]["Stage"] == "10":
             answer = 'Политика нашей компании подразумевает сотрудничество с лицами от 16ти лет' \
                      '\nподрастите немного и возвращайтесь обратно)'
             bot.send_message(message.chat.id, answer)
-        elif buf.dict[message.from_user.id]["Stage"] == "6":
+        elif App.dict[message.from_user.id]["Stage"] == "6":
             answer = 'Заявка уже отправлена, ожидайте ответа оператора⏰'
             bot.send_message(message.chat.id, answer)
-    else:
-        if Check_ID(message.from_user.id):
-            if App.dict[message.from_user.id]["Stage"] == "10":
-                answer = 'Политика нашей компании подразумевает сотрудничество с лицами от 16ти лет' \
-                         '\nподрастите немного и возвращайтесь обратно)'
-                bot.send_message(message.chat.id, answer)
-            elif App.dict[message.from_user.id]["Stage"] == "6":
-                answer = 'Заявка уже отправлена, ожидайте ответа оператора⏰'
-                bot.send_message(message.chat.id, answer)
     try:
         user_id = message.from_user.id
         # City and Employment_type--------------------------------------------------------------------------------------
-        if buf.dict[user_id]["Stage"] == "0":
-            buf_mh.history[user_id].append(message.text)
-            buf.dict[user_id]["City"] = message.text
-            buf.dict[user_id]["Name"] = message.from_user.first_name
-            buf.dict[user_id]["Stage"] = "1"
-        if buf.dict[user_id]["Stage"] == "1":
+        if App.dict[user_id]["Stage"] == "0":
+            Message.history[user_id].append(message.text)
+            App.dict[user_id]["City"] = message.text
+            App.dict[user_id]["Name"] = message.from_user.first_name
+            App.dict[user_id]["Stage"] = "1"
+        if App.dict[user_id]["Stage"] == "1":
             markup_inline = types.InlineKeyboardMarkup(row_width=1)
             markup_inline.add(
                               types.InlineKeyboardButton("Подработка", callback_data='side_job'),
@@ -241,25 +216,25 @@ def Recruting(message):
                               types.InlineKeyboardButton("Свой вариант", callback_data='var_job')
                               )
             answer = 'Вы рассматриваете подработку или полную занятость ?'
-            buf_mh.history[user_id].append(answer)
+            Message.history[user_id].append(answer)
             bot.send_message(chat_id=message.chat.id, text=answer, reply_markup=markup_inline)
 
         # --------------------------------------------------------------------------------------------------------------
         # Age and Transport---------------------------------------------------------------------------------------------
-        if buf.dict[user_id]["Stage"] == "2":
+        if App.dict[user_id]["Stage"] == "2":
             try:
                 int(message.text)
                 if int(message.text) < 16:
-                    buf.dict[user_id]["Stage"] = "10"
-                    buf_mh.history[user_id].append(message.text)
-                    save(buf.instring(), app_folder)
+                    App.dict[user_id]["Stage"] = "10"
+                    Message.history[user_id].append(message.text)
+                    App.instring_save(app_folder)
                     answer = 'Политика нашей компании подразумевает сотрудничество с лицами от 16ти лет' \
                              '\nподрастите немного и возвращайтесь обратно)'
                     bot.send_message(message.chat.id, answer)
                 else:
-                    buf.dict[user_id]["Age"] = f"{int(message.text)}"
-                    buf.dict[user_id]["Stage"] = "3"
-                    buf_mh.history[user_id].append(f"{int(message.text)}")
+                    App.dict[user_id]["Age"] = f"{int(message.text)}"
+                    App.dict[user_id]["Stage"] = "3"
+                    Message.history[user_id].append(f"{int(message.text)}")
                     markup_inline1 = types.InlineKeyboardMarkup(row_width=1)
                     markup_inline1.add(
                         types.InlineKeyboardButton("Самокат", callback_data='самокат'),
@@ -269,16 +244,16 @@ def Recruting(message):
                         types.InlineKeyboardButton("Я пеший курьер", callback_data='пешеход')
                     )
                     answer = 'Хорошо, теперь о транспорте. Как вы будете осуществлять курьерскую деятельность?'
-                    buf_mh.history[message.from_user.id].append(answer)
+                    Message.history[message.from_user.id].append(answer)
                     bot.send_message(message.chat.id, answer, reply_markup=markup_inline1)
             except:
                 bot.send_message(chat_id=message.chat.id, text='Введите возраст в правильном формате, цифрами блять')
         # --------------------------------------------------------------------------------------------------------------
         # How Know About Us---------------------------------------------------------------------------------------------
-        if buf.dict[user_id]["Stage"] == "4":
-            buf.dict[user_id]["Stage"] = "5"
-            buf.dict[user_id]["Referral"] = message.text
-            buf_mh.history[user_id].append(message.text)
+        if App.dict[user_id]["Stage"] == "4":
+            App.dict[user_id]["Stage"] = "5"
+            App.dict[user_id]["Referral"] = message.text
+            Message.history[user_id].append(message.text)
             markup_inline2 = types.InlineKeyboardMarkup()
             markup_inline2.add(types.InlineKeyboardButton("Отправить", callback_data='send'))
             bot.send_message(message.chat.id, 'Анкета заполнена, нажмите отправить для отправки📩',
@@ -291,7 +266,6 @@ def Recruting(message):
 def app_buttons():
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(types.InlineKeyboardButton(text="Сортировка", callback_data="sort_apps"))
-
 
 def verify_admin(user_id):
     with open('folder/admins') as admins:
@@ -311,7 +285,7 @@ def replace_all(inp):
 
 def save(string, file):
     with open(file, 'a') as file:
-        file.write(f"{string}\n")
+        file.write(f"\n{string}")
 
 
 def load_1(dict, file_d):
@@ -350,7 +324,7 @@ def load_2(dict, file_d):
                     dict[int(app[0])].append(i)
         file.close()
     with open(file_d, 'w') as file:
-        file.write("")
+         file.write("")
     return dict
 
 
@@ -360,5 +334,5 @@ if __name__ == '__main__':
     except Exception as ex:
         print(ex)
     finally:
-        save(App.instring(), app_folder)
-        save(Message.instring(), msg_folder)
+        App.instring_save(app_folder)
+        Message.instring_save(msg_folder)

@@ -12,8 +12,10 @@ class Message_history:
     def print_dict(self):
         print(self.history)
 
-    def instring(self):
-        return str(self.history)
+    def instring_save(self, file):
+        with open(file, "a") as file:
+            for key in self.history.keys():
+                file.write(str("{"f"{key}: ") + str(self.history[key]) + "}\n")
 
 
 class Application:
@@ -38,5 +40,7 @@ class Application:
     def print_dict(self):
         print(self.dict)
 
-    def instring(self):
-        return str(self.dict)
+    def instring_save(self, file):
+        with open(file, "a") as file:
+            for key in self.dict.keys():
+                file.write(str("{"f"{key}: ") + str(self.dict[key]) + "}\n")
