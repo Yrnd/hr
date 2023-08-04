@@ -12,8 +12,17 @@ class Message_history:
     def print_dict(self):
         print(self.history)
 
+    def instring_print(self):
+            for key in self.history.keys():
+                print(str("{"f"{key}: ") + str(self.dict[key]) + "}\n")
+
     def instring_save(self, file):
         with open(file, "a") as file:
+            for key in self.history.keys():
+                file.write(str("{"f"{key}: ") + str(self.history[key]) + "}\n")
+
+    def instring_write(self, file):
+        with open(file, "w") as file:
             for key in self.history.keys():
                 file.write(str("{"f"{key}: ") + str(self.history[key]) + "}\n")
 
@@ -40,7 +49,15 @@ class Application:
     def print_dict(self):
         print(self.dict)
 
+    def instring_print(self):
+            for key in self.dict.keys():
+                print(str("{"f"{key}: ") + str(self.dict[key]) + "}\n")
     def instring_save(self, file):
         with open(file, "a") as file:
+            for key in self.dict.keys():
+                file.write(str("{"f"{key}: ") + str(self.dict[key]) + "}\n")
+
+    def instring_write(self, file):
+        with open(file, "w") as file:
             for key in self.dict.keys():
                 file.write(str("{"f"{key}: ") + str(self.dict[key]) + "}\n")
