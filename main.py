@@ -22,19 +22,21 @@ def admin_panel(message):
         bot.send_message(message.chat.id, text='Список анкет на данный момент:',
                          reply_markup=Make_buttons_with_dict(admin_panel.dict))
     else:
-        ...
+        Recruting(message=message)
 
 
 def Make_buttons_with_dict(source):
     button_markup = types.InlineKeyboardMarkup(row_width=1)
+    button_markup.add(types.InlineKeyboardButton('Сортировать', callback_data='sort_menu'))
     for key in source.keys():
         button_markup.add(
             types.InlineKeyboardButton(
                 f"{source[key]['Name']}: Стадия анкеты - {source[key]['Stage']}",
-                callback_data=f'{key}'
+                callback_data=f'key={key}'
             )
         )
     return button_markup
+
 
 @bot.message_handler(commands=["start"])
 def start(message):
@@ -68,8 +70,6 @@ def Check_ID(id):
         return False
 
 
-
-
 def Pre_talk(id, user_id):
     buf.add_key(user_id)
     buf_msg.add_key(user_id)
@@ -80,8 +80,14 @@ def Pre_talk(id, user_id):
     buf_msg.history[user_id].append('Напишите свой город, район города')
 
 
-@bot.callback_query_handler(func=lambda call: True)
+@bot.callback_query_handler(func=lambda call: not call.data.startswith('key='))
 def Recruting_talk(call):
+    if call.data == "back_to_admin":
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text='Список анкет на данный момент:',
+                              reply_markup=Make_buttons_with_dict(admin_panel.dict)
+                              )
     if call.data == "app_ready":
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
@@ -169,8 +175,9 @@ def Recruting_talk(call):
         Message.add_key(call.message.chat.id)
         App.dict[call.message.chat.id] = buf.dict[call.message.chat.id]
         Message.history[call.message.chat.id] = buf_msg.history[call.message.chat.id]
-        print("Получена анкета: ")
-        App.instring_print()
+        buf.instring_save(app_folder)
+        buf_msg.instring_save(msg_folder)
+        print("Получена анкета: ", buf.dict[call.message.chat.id])
         answer = 'Ваше заявление обрабатывается. Ожидайте, с Вами свяжется наш живой оператор'
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
@@ -204,6 +211,22 @@ def Recruting_talk(call):
     # ------------------------------------------------------------------------------------------------------------------
     # И так доходишь до сообщения с двумя кнопками "Согласен" или "Не согласен", потом уже сама диалоговая хуйня будет,
     # которая делается точно так же
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('key='))
+def app_render(call):
+    key = int(call.data[4:])
+    markup_app = types.InlineKeyboardMarkup(row_width=3)
+    markup_app.add(
+        types.InlineKeyboardButton('Написать', callback_data="asda"),
+        types.InlineKeyboardButton('История', callback_data="231"),
+        types.InlineKeyboardButton('Назад', callback_data="back_to_admin")
+    )
+    bot.edit_message_text(chat_id=call.message.chat.id,
+                          message_id=call.message.message_id,
+                          text=f"Анкета пользователя {admin_panel.dict[key]['Name']}",
+                          reply_markup=markup_app
+                          )
 
 
 @bot.message_handler(content_types=["text"])
@@ -342,9 +365,8 @@ def load_2(dict, file_d):
 
 if __name__ == '__main__':
     try:
+        App.dict = load_1(App.dict, app_folder)
+        Message.history = load_2(Message.history, msg_folder)
         bot.polling(none_stop=True, interval=0)
     except Exception as ex:
         print(ex)
-    finally:
-        App.instring_write(app_folder)
-        Message.instring_write(msg_folder)

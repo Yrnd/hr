@@ -52,6 +52,7 @@ class Application:
     def instring_print(self):
             for key in self.dict.keys():
                 print(str("{"f"{key}: ") + str(self.dict[key]) + "}\n")
+
     def instring_save(self, file):
         with open(file, "a") as file:
             for key in self.dict.keys():

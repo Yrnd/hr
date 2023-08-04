@@ -1,2 +1,2 @@
-{704496313: {'Name': 'Sin1ster', 'Stage': '6', 'City': '123', 'Employment_type': 'Полная_занятость', 'Age': '123', 'Transport': 'Машина', 'Referral': '123'}}
-{704496315: {'Name': 'Sin1ster', 'Stage': '6', 'City': '123', 'Employment_type': 'Полная_занятость', 'Age': '123', 'Transport': 'Машина', 'Referral': '123'}}
+{704496314: {'Name': 'Sin1ster', 'Stage': '6', 'City': '123', 'Employment_type': 'Подработка', 'Age': '123', 'Transport': 'Велосипед', 'Referral': '123'}}
+{704496315: {'Name': 'Sin1ster', 'Stage': '6', 'City': '123', 'Employment_type': 'Полная_занятость', 'Age': '123', 'Transport': 'Велосипед', 'Referral': '123'}}
