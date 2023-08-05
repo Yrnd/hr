@@ -1,10 +1,11 @@
 import random
 import time
 import telebot
+import os
 from telebot import types
 from Class import Message_history, Application
 
-bot = telebot.TeleBot('6597318240:AAGBAAcI3xgovQM7JefszGAymzLhNv9doUQ')
+bot = telebot.TeleBot('')
 
 Message = Message_history()
 App = Application()
@@ -16,25 +17,39 @@ buf_msg = Message_history()
 
 
 @bot.message_handler(commands=["admin"])
-def admin_panel(message):
+def make_admin_panel(message):
     if verify_admin(message.from_user.id):
-        admin_panel.dict = App.dict
         bot.send_message(message.chat.id, text='Список анкет на данный момент:',
-                         reply_markup=Make_buttons_with_dict(admin_panel.dict))
+                         reply_markup=Make_buttons_with_dict(App.dict))
     else:
         Recruting(message=message)
 
 
 def Make_buttons_with_dict(source):
     button_markup = types.InlineKeyboardMarkup(row_width=1)
-    button_markup.add(types.InlineKeyboardButton('Сортировать', callback_data='sort_menu'))
+    button_markup.add(types.InlineKeyboardButton('Сортировать', callback_data='sort'))
     for key in source.keys():
-        button_markup.add(
-            types.InlineKeyboardButton(
-                f"{source[key]['Name']}: Стадия анкеты - {source[key]['Stage']}",
-                callback_data=f'key={key}'
+        if int(source[key]['Stage']) > 6:
+            button_markup.add(
+                types.InlineKeyboardButton(
+                    f"{source[key]['Name']}: Стадия анкеты - Ожидание оператора",
+                    callback_data=f'key={key}'
+                )
             )
-        )
+        if int(source[key]['Stage']) == 6:
+            button_markup.add(
+                types.InlineKeyboardButton(
+                    f"{source[key]['Name']}: Стадия анкеты - Отправка анкеты",
+                    callback_data=f'key={key}'
+                )
+            )
+        if int(source[key]['Stage']) < 6:
+            button_markup.add(
+                types.InlineKeyboardButton(
+                    f"{source[key]['Name']}: Стадия анкеты - Заполнение",
+                    callback_data=f'key={key}'
+                )
+            )
     return button_markup
 
 
@@ -80,8 +95,35 @@ def Pre_talk(id, user_id):
     buf_msg.history[user_id].append('Напишите свой город, район города')
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith('historykey='))
+def make_history_file(call):
+    key = int(call.data[11:])
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    markup.add(types.InlineKeyboardButton("Назад", callback_data=f'key={key}'))
+    bot.edit_message_text(chat_id=call.message.chat.id,
+                          message_id=call.message.message_id,
+                          text=f"{Message.instring_print_key(key)}",
+                          reply_markup=markup
+                          )
+
+
 @bot.callback_query_handler(func=lambda call: not call.data.startswith('key='))
 def Recruting_talk(call):
+    if call.data == "sort":
+        buffer_list = sorted(App.dict.items(), key=lambda item: item[1]['Stage'], reverse=True)
+        for iterate in buffer_list:
+            admin_panel.dict[iterate[0]] = iterate[1]
+        print(admin_panel.dict)
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text='Сортировка...',
+                              )
+        time.sleep(0.5)
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id,
+                              text='Отсортированные анкеты:',
+                              reply_markup=Make_buttons_with_dict(admin_panel.dict)
+                              )
     if call.data == "back_to_admin":
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id,
@@ -218,8 +260,8 @@ def app_render(call):
     key = int(call.data[4:])
     markup_app = types.InlineKeyboardMarkup(row_width=3)
     markup_app.add(
-        types.InlineKeyboardButton('Написать', callback_data="asda"),
-        types.InlineKeyboardButton('История', callback_data="231"),
+        types.InlineKeyboardButton('Написать', url=f"t.me/{admin_panel.dict[key]['Name']}"),
+        types.InlineKeyboardButton('История', callback_data=f'historykey={key}'),
         types.InlineKeyboardButton('Назад', callback_data="back_to_admin")
     )
     bot.edit_message_text(chat_id=call.message.chat.id,
@@ -245,7 +287,7 @@ def Recruting(message):
     if buf.dict[user_id]["Stage"] == "0":
         buf_msg.history[user_id].append(message.text)
         buf.dict[user_id]["City"] = message.text
-        buf.dict[user_id]["Name"] = message.from_user.first_name
+        buf.dict[user_id]["Name"] = message.from_user.username
         buf.dict[user_id]["Stage"] = "1"
     if buf.dict[user_id]["Stage"] == "1":
         markup_inline = types.InlineKeyboardMarkup(row_width=1)
@@ -299,11 +341,6 @@ def Recruting(message):
         bot.send_message(message.chat.id, 'Анкета заполнена, нажмите отправить для отправки📩',
                          reply_markup=markup_inline2)
     # --------------------------------------------------------------------------------------------------------------
-
-
-def app_buttons():
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    markup.add(types.InlineKeyboardButton(text="Сортировка", callback_data="sort_apps"))
 
 
 def verify_admin(user_id):
@@ -370,3 +407,4 @@ if __name__ == '__main__':
         bot.polling(none_stop=True, interval=0)
     except Exception as ex:
         print(ex)
+
